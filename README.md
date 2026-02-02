@@ -162,3 +162,9 @@ src/two_tower_recsys/
 - **Item features**: add text (titles) via a language model encoder; add multimodal features.
 - **Evaluation protocol**: add multiple held-out items per user, popularity/coverage metrics, calibration, etc.
 
+## References
+
+- https://towardsdatascience.com/scaling-recommender-transformers-to-a-billion-parameters/
+- https://netflixtechblog.medium.com/towards-generalizable-and-efficient-large-scale-generative-recommenders-a7db648aa257
+- https://netflixtechblog.com/foundation-model-for-personalized-recommendation-1a0bd8e02d39
+
