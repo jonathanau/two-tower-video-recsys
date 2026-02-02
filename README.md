@@ -171,7 +171,7 @@ src/two_tower_recsys/
 
 ## References
 
-- https://towardsdatascience.com/scaling-recommender-transformers-to-a-billion-parameters/
-- https://netflixtechblog.medium.com/towards-generalizable-and-efficient-large-scale-generative-recommenders-a7db648aa257
-- https://netflixtechblog.com/foundation-model-for-personalized-recommendation-1a0bd8e02d39
+- [Scaling Recommender Transformers to a Billion Parameters](https://towardsdatascience.com/scaling-recommender-transformers-to-a-billion-parameters/)
+- [Towards Generalizable and Efficient Large-Scale Generative Recommenders](https://netflixtechblog.medium.com/towards-generalizable-and-efficient-large-scale-generative-recommenders-a7db648aa257)
+- [Foundation Model for Personalized Recommendation](https://netflixtechblog.com/foundation-model-for-personalized-recommendation-1a0bd8e02d39)
 
