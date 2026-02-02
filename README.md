@@ -7,6 +7,7 @@ Minimal, research-oriented implementation of a **two-tower retrieval model** wit
 - **Sequential user modeling** via a Transformer encoder over watch history
 - **Lightweight content features** via MovieLens genre embeddings on the item side
 - **In-batch softmax / contrastive learning** objective with a learnable temperature
+- **ANN retrieval** via HNSW (`hnswlib`) for fast top-K recommendation
 - **Exact retrieval evaluation** (brute-force dot product over all items) with Recall@K and MRR@K
 
 This repository is intentionally small and readable, meant for rapid iteration and ablations.
@@ -80,12 +81,16 @@ For each validation/test example:
 
 Evaluation is implemented in `two_tower_recsys.train.evaluate_recall_mrr`.
 
+Recommendations produced by `two_tower_recsys.retrieval.TwoTowerRecommender` use an HNSW ANN index
+(when available) and fall back to brute-force scoring if the index artifact is missing.
+
 ## Artifacts
 
 Training writes an `artifacts_dir` (default: `<data_dir>/artifacts`) containing:
 
 - **`model.pt`**: PyTorch checkpoint (`state_dict`, config, pad index)
 - **`item_embeddings.npy`**: precomputed item embeddings for fast retrieval
+- **`hnsw_index.bin`**: HNSW (`hnswlib`) ANN index over item embeddings
 - **`mappings.json`**: raw-id ↔ index mapping metadata + pad index
 - **`items.json`**: titles, genre IDs, genre vocabulary
 - **`user_histories.json`**: full user histories (by internal user index)
@@ -158,7 +163,7 @@ src/two_tower_recsys/
 
 ## Notes for researchers / extensions
 
-- **ANN retrieval**: replace brute-force scoring with FAISS / ScaNN for larger corpora.
+- **ANN retrieval**: implemented with HNSW (`hnswlib`); tune `M` / `ef_construction` / `ef` or swap to FAISS / ScaNN.
 - **Negatives**: add sampled or hard negatives beyond in-batch negatives.
 - **User encoder**: swap mean pooling for CLS token pooling, attention pooling, or GRU.
 - **Item features**: add text (titles) via a language model encoder; add multimodal features.

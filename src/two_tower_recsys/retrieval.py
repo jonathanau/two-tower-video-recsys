@@ -3,6 +3,7 @@ from __future__ import annotations
 from dataclasses import asdict
 from pathlib import Path
 
+import hnswlib
 import numpy as np
 import torch
 
@@ -41,7 +42,15 @@ class TwoTowerRecommender:
         self.model.eval()
 
         item_vecs = np.load(artifacts_dir / "item_embeddings.npy")
-        self.item_vecs = torch.from_numpy(item_vecs).to(device)
+        self.item_vecs = np.asarray(item_vecs, dtype=np.float32)
+
+        self.ann: hnswlib.Index | None = None
+        index_path = artifacts_dir / "hnsw_index.bin"
+        if index_path.exists():
+            ann = hnswlib.Index(space="ip", dim=int(self.item_vecs.shape[1]))
+            ann.load_index(str(index_path), max_elements=int(self.item_vecs.shape[0]))
+            ann.set_ef(50)
+            self.ann = ann
 
     def recommend(
         self,
@@ -69,20 +78,53 @@ class TwoTowerRecommender:
         user_ids = torch.tensor([user_idx], dtype=torch.long, device=self.device)
 
         with torch.no_grad():
-            user_vec = self.model.encode_users(user_ids, histories, lengths)
-            scores = (user_vec @ self.item_vecs.T).squeeze(0)
+            user_vec_t = self.model.encode_users(user_ids, histories, lengths)
 
-            if exclude_seen:
-                for it in hist:
-                    scores[int(it)] = -1e9
+        user_vec = user_vec_t.squeeze(0).detach().cpu().numpy().astype(np.float32)
 
-            topk = torch.topk(scores, k=min(k, scores.shape[0])).indices.tolist()
+        seen: set[int] = set(hist) if exclude_seen else set()
+        num_items = int(self.item_vecs.shape[0])
+        k = int(min(k, num_items))
+
+        item_indices: list[int] = []
+        if self.ann is not None:
+            self.ann.set_ef(max(50, k * 10))
+            requested = int(min(num_items, max(k * 5, k + len(seen))))
+            while True:
+                labels, _ = self.ann.knn_query(user_vec.reshape(1, -1), k=requested)
+                item_indices = []
+                for idx in labels[0].tolist():
+                    ii = int(idx)
+                    if ii < 0:
+                        continue
+                    if ii in seen:
+                        continue
+                    item_indices.append(ii)
+                    if len(item_indices) >= k:
+                        break
+
+                if len(item_indices) >= k or requested >= num_items:
+                    break
+                requested = int(min(num_items, requested * 2))
+
+        if len(item_indices) < k:
+            scores_all = self.item_vecs @ user_vec
+            if seen:
+                scores_all[list(seen)] = -1e9
+
+            if k == 0:
+                return []
+
+            topk = np.argpartition(-scores_all, kth=min(k - 1, num_items - 1))[:k]
+            topk = topk[np.argsort(-scores_all[topk])]
+            item_indices = [int(x) for x in topk.tolist()]
+
+        scores_k = self.item_vecs[item_indices] @ user_vec
 
         out: list[tuple[int, str, float]] = []
-        for item_idx in topk:
+        for item_idx, score in zip(item_indices, scores_k.tolist()):
             raw_item_id = self.mappings.index_to_item_id[item_idx]
             title = self.item_titles_by_index[item_idx] if item_idx < len(self.item_titles_by_index) else ""
-            score = float(scores[item_idx].item())
-            out.append((int(raw_item_id), str(title), score))
+            out.append((int(raw_item_id), str(title), float(score)))
 
         return out

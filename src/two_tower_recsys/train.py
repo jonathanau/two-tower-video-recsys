@@ -4,6 +4,7 @@ import json
 from dataclasses import asdict
 from pathlib import Path
 
+import hnswlib
 import numpy as np
 import torch
 from torch.utils.data import DataLoader
@@ -206,7 +207,14 @@ def train_two_tower(
         all_item_ids = torch.arange(config.num_items, device=device, dtype=torch.long)
         item_vecs = model2.encode_items(all_item_ids).cpu().numpy()
 
+    item_vecs = np.asarray(item_vecs, dtype=np.float32)
     np.save(artifacts_dir / "item_embeddings.npy", item_vecs)
+
+    ann = hnswlib.Index(space="ip", dim=int(item_vecs.shape[1]))
+    ann.init_index(max_elements=int(item_vecs.shape[0]), ef_construction=200, M=16)
+    ann.add_items(item_vecs, ids=np.arange(int(item_vecs.shape[0])))
+    ann.set_ef(50)
+    ann.save_index(str(artifacts_dir / "hnsw_index.bin"))
 
     test_recall, test_mrr = evaluate_recall_mrr(
         model2,
