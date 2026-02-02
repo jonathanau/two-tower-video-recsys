@@ -1,5 +1,7 @@
 # Two-Tower Video Recommender (Retrieval)
 
+MIT License
+
 Minimal, research-oriented implementation of a **two-tower retrieval model** with:
 
 - **Sequential user modeling** via a Transformer encoder over watch history
