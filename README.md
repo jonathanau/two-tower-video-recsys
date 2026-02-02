@@ -162,8 +162,3 @@ src/two_tower_recsys/
 - **Item features**: add text (titles) via a language model encoder; add multimodal features.
 - **Evaluation protocol**: add multiple held-out items per user, popularity/coverage metrics, calibration, etc.
 
-## References
-
-- A. Huang et al., *Learning Deep Structured Semantic Models for Web Search using Clickthrough Data* (DSSM), 2013.
-- P. Covington et al., *Deep Neural Networks for YouTube Recommendations*, 2016.
-- A. Vaswani et al., *Attention Is All You Need*, 2017.
