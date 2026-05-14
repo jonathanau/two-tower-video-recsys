@@ -1,6 +1,6 @@
 # Two-Tower Video Recommender (Retrieval)
 
-MIT License
+[![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](./LICENSE)
 
 Minimal, research-oriented implementation of a **two-tower retrieval model** with:
 
